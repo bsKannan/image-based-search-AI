@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "name": "Car Brake Pad",
+    "description": "Front ceramic brake pad for sedan vehicles",
+    "image": "brake.jpg",
+    "embedding": null
+  },
+  {
+    "id": 2,
+    "name": "Oil Filter",
+    "description": "Spin-on oil filter for many gasoline engines",
+    "image": "oil_filter.jpg",
+    "embedding": null
+  },
+  {
+    "id": 3,
+    "name": "Air Filter",
+    "description": "Engine air filter, rectangular panel type",
+    "image": "air_filter.jpg",
+    "embedding": null
+  }
+]
