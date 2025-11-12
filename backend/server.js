@@ -3,75 +3,125 @@ import multer from "multer";
 import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
+import { ChromaClient } from "chromadb";
 import fs from "fs";
+import path from "path";
 
 dotenv.config();
 const app = express();
+const port = process.env.PORT || 5000;
+const upload = multer({ dest: "uploads/" });
+
 app.use(cors());
 app.use(express.json());
 
-const upload = multer({ dest: "uploads/" });
+// ✅ Initialize OpenAI + ChromaDB
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const chroma = new ChromaClient({ path: process.env.CROMADB_API_URL });
 
-// Mock product dataset
-let products = [
-  { id: 1, name: "Car Brake Pad", image: "brake.jpg", embedding: null },
-  { id: 2, name: "Oil Filter", image: "oil_filter.jpg", embedding: null },
+// ✅ Sample product data
+const sampleProducts = [
+  {
+    sku: "SKU1001",
+    name: "Brake Pad",
+    description: "Ceramic brake pad for sedans",
+    image: "brake.jpg",
+  },
+  {
+    sku: "SKU1002",
+    name: "Oil Filter",
+    description: "Spin-on engine oil filter",
+    image: "oil_filter.jpg",
+  },
+  {
+    sku: "SKU1003",
+    name: "Air Filter",
+    description: "Rectangular air intake filter",
+    image: "air_filter.jpg",
+  },
+  {
+    sku: "SKU1004",
+    name: "Fuel Filter",
+    description: "Inline diesel fuel filter",
+    image: "fuel_filter.jpg",
+  },
+  {
+    sku: "SKU1005",
+    name: "Cabin Filter",
+    description: "AC cabin air filter for cars",
+    image: "cabin_filter.jpg",
+  },
 ];
 
-// Convert reference images to embeddings (run once)
-async function initializeEmbeddings() {
-  for (let product of products) {
-    const imgPath = `./assets/${product.image}`;
-    const response = await openai.embeddings.create({
-      model: "text-embedding-3-large",
-      input: `Product image of ${product.name}`,
+// ✅ Create Chroma Collection
+let collection;
+async function initChroma() {
+  collection = await chroma.getOrCreateCollection({ name: "product_embeddings" });
+  for (const item of sampleProducts) {
+    const embedding = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: `${item.name} ${item.description}`,
     });
-    product.embedding = response.data[0].embedding;
+    await collection.add({
+      ids: [item.sku],
+      embeddings: [embedding.data[0].embedding],
+      metadatas: [item],
+    });
   }
-  fs.writeFileSync("products.json", JSON.stringify(products, null, 2));
-  console.log("✅ Product embeddings initialized.");
+  console.log("✅ Sample products embedded in ChromaDB");
 }
+initChroma();
 
-// Upload and compare image
+// ✅ Upload + Search Endpoint
 app.post("/api/search", upload.single("image"), async (req, res) => {
-  const imagePath = req.file.path;
-
   try {
-    // Step 1: Create embedding from uploaded image
-    const imageEmbedding = await openai.embeddings.create({
-      model: "text-embedding-3-large",
-      input: `Image content from uploaded file`,
+    const { sku, query } = req.body;
+    const imagePath = req.file?.path;
+
+    // Step 1️⃣ Convert image → description
+    const vision = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Describe this automotive product." },
+            { type: "image_url", image_url: `file://${path.resolve(imagePath)}` },
+          ],
+        },
+      ],
+    });
+    const description = vision.choices[0].message.content;
+
+    // Step 2️⃣ Create embedding from description
+    const embedding = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: `${description} ${query || ""}`,
     });
 
-    // Step 2: Load precomputed product embeddings
-    const data = JSON.parse(fs.readFileSync("products.json"));
-    const uploaded = imageEmbedding.data[0].embedding;
+    // Step 3️⃣ Query Chroma for similar products
+    const results = await collection.query({
+      queryEmbeddings: [embedding.data[0].embedding],
+      nResults: 3,
+    });
 
-    // Step 3: Compare embeddings via cosine similarity
-    function cosineSim(a, b) {
-      const dot = a.reduce((sum, v, i) => sum + v * b[i], 0);
-      const normA = Math.sqrt(a.reduce((sum, v) => sum + v * v, 0));
-      const normB = Math.sqrt(b.reduce((sum, v) => sum + v * v, 0));
-      return dot / (normA * normB);
-    }
+    // Step 4️⃣ Determine best match
+    const best = results.metadatas[0][0];
+    const similarity = results.distances[0][0];
+    const isMatch = best.sku === sku;
 
-    const results = data.map((item) => ({
-      ...item,
-      similarity: cosineSim(uploaded, item.embedding),
-    }));
-
-    results.sort((a, b) => b.similarity - a.similarity);
-    res.json({ match: results[0], allMatches: results });
+    res.json({
+      uploadedSKU: sku,
+      imageDescription: description,
+      isMatch,
+      similarity: (1 - similarity).toFixed(2),
+      bestMatch: best,
+      topResults: results.metadatas[0],
+    });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Uncomment this line to generate embeddings first
- initializeEmbeddings();
-
-app.listen(process.env.PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${process.env.PORT}`)
-);
+app.listen(port, () => console.log(`🚀 Server running on port ${port}`));

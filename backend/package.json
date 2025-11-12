@@ -10,10 +10,14 @@
   "author": "BSK",
   "license": "ISC",
   "dependencies": {
+    "chromadb": "^3.1.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "multer": "^2.0.2",
     "openai": "^6.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1"
   }
 }
