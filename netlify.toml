@@ -1,0 +1,15 @@
+[build]
+  # Build settings for Netlify — base is the frontend folder
+  base = "image-search-frontend"
+  publish = "dist"
+  command = "npm ci && npm run build"
+
+[build.environment]
+  # Do NOT hardcode secrets here in real projects. Set them in Netlify UI instead.
+  # Example: point the frontend to your backend API; replace with your production URL
+  VITE_API_BASE = "https://your-backend.example"
+
+[dev]
+  # Optional: local Netlify dev settings if using `netlify dev`
+  command = "npm --prefix image-search-frontend run dev"
+  port = 8888
