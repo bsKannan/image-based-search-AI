@@ -26,7 +26,7 @@ const UploadForm: React.FC<Props> = ({
         <label className="block text-sm font-semibold text-gray-700 mb-2">
           📷 Upload Image
         </label>
-        <div className="relative">
+        <div className="relative p-[2px]">
           <input
             type="file"
             accept="image/*"
@@ -38,14 +38,14 @@ const UploadForm: React.FC<Props> = ({
             htmlFor="file-input"
             className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
           >
-            <span className="text-blue-600 font-medium">Click to upload or drag & drop</span>
+            <span className="text-blue-600 font-medium p-[2px]">Click to upload or drag & drop</span>
           </label>
         </div>
       </div>
 
       {/* SKU Input */}
       <div className="mb-6">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-sm font-semibold text-gray-700 mb-2 p-[2px]">
           📦 SKU (Required)
         </label>
         <input
@@ -58,7 +58,7 @@ const UploadForm: React.FC<Props> = ({
       </div>
 
       {/* Query Input */}
-      <div className="mb-8">
+      <div className="mb-8 p-[2px]">
         <label className="block text-sm font-semibold text-gray-700 mb-2">
           🔎 Additional Query (Optional)
         </label>
