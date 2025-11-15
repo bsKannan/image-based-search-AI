@@ -8,7 +8,7 @@ const Results: React.FC<Props> = ({ result }) => {
   if (!result) return null;
 
   return (
-    <div className="mt-10 w-full max-w-2xl">
+    <div className="mt-10 w-full max-w-2xl p-[2px]">
       {/* Main Results Card */}
       <div className="bg-white shadow-xl rounded-2xl p-8 border border-gray-200 mb-8">
         <div className="flex items-center gap-3 mb-6">
