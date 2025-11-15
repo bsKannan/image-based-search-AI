@@ -1,55 +1,55 @@
-import axios from "axios";
 import { useState } from "react";
+import axios from "axios";
+import Header from "./components/Header";
+import UploadForm from "./components/UploadForm";
+import Results from "./components/Results";
 
-const App = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const [result, setReult] = useState<any>(null);
+function App() {
+  const [image, setImage] = useState<File | null>(null);
+  const [sku, setSku] = useState("");
+  const [query, setQuery] = useState("");
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleFileUpload = async() => {
-    if(!file) return;
+  const handleSearch = async () => {
+    if (!image || !sku) {
+      alert("Please upload an image and enter SKU!");
+      return;
+    }
 
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append("image", image);
+    formData.append("sku", sku);
+    formData.append("query", query);
 
+    setLoading(true);
     try {
-      const response = await axios.post("http://localhost:3000/api/search", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:5000";
+      const res = await axios.post(`${API_BASE}/api/search`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      setReult(response.data.match);
-  }
-  catch (error) {
-      console.error("Error uploading file:", error);
+      setResult(res.data);
+    } catch (err) {
+      alert("Error during search.");
     }
-  }
+    setLoading(false);
+  };
 
   return (
- <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold mb-6">🧠 Image-based Product Search</h1>
-      <input
-        type="file"
-        onChange={(e) => setFile(e.target.files?.[0] || null)}
-        className="mb-4"
-      />
-      <button
-        onClick={handleFileUpload}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-      >
-        Search Product
-      </button>
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-8">
+      <Header />
 
-      {result && (
-        <div className="mt-6 p-4 bg-white shadow rounded-xl">
-          <h2 className="text-xl font-semibold">{result.name}</h2>
-          <img
-            src={`/${result.image}`}
-            alt={result.name}
-            className="w-48 mt-2 rounded-lg"
-          />
-          <p className="mt-2 text-gray-600">Similarity Score: {result.similarity.toFixed(2)}</p>
-        </div>
-      )}
+      <UploadForm
+        onImageChange={(file) => setImage(file)}
+        sku={sku}
+        setSku={setSku}
+        query={query}
+        setQuery={setQuery}
+        onSearch={handleSearch}
+        loading={loading}
+      />
+
+      {result && <Results result={result} />}
     </div>
   );
 }
