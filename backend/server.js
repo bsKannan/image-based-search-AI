@@ -7,7 +7,15 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ✅ Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173", // Local dev
+    "http://localhost:3000", // Local dev
+    "https://*.netlify.app",  // All Netlify sites
+    process.env.FRONTEND_URL  // Custom frontend URL from env
+  ],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
