@@ -1,0 +1,15 @@
+{
+  "name": "image-based-search-ai",
+  "version": "1.0.0",
+  "description": "Image-based search application with AI backend",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix image-search-frontend\"",
+    "backend": "npm run dev --prefix backend",
+    "frontend": "npm run dev --prefix image-search-frontend",
+    "install-all": "npm install && npm install --prefix backend && npm install --prefix image-search-frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
